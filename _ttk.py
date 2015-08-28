@@ -1,4 +1,5 @@
 import ttk
+import tkMessageBox
 import Tkinter
 
 class Window(ttk.Frame):
@@ -6,6 +7,7 @@ class Window(ttk.Frame):
 
 def hello():
     print "hello!"
+    tkMessageBox.showinfo("hello!")
 
 
 def demo():
@@ -45,13 +47,25 @@ def demo():
     filemenu.add_separator()
     filemenu.add_command(label="Exit", command=root.quit)
     menubar.add_cascade(label="File", menu=filemenu)
+    # display the menu
+    root.config(menu=menubar)
 
     progressbar = ttk.Progressbar(orient=Tkinter.HORIZONTAL, length=1000, mode='determinate', value=20, variable=30, maximum=100)
     progressbar.pack(side="bottom")
     progressbar.start()
 
-    # display the menu
-    root.config(menu=menubar)
+
+
+    # create a popup menu
+    menu = Tkinter.Menu(root, tearoff=0)
+    menu.add_command(label="Undo", command=hello)
+    menu.add_command(label="Redo", command=hello)
+    def popup(event):
+        menu.post(event.x_root, event.y_root)
+
+    # attach popup to frame
+    table.bind("<Button-3>", popup)
+
 
     root.mainloop()
 
