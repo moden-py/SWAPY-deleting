@@ -285,8 +285,6 @@ ctrl."+action+"()\n"
     def _get_swapy_object(self, pwa_obj):
         pwa_type = self._get_pywinobj_type(pwa_obj)
         #print pwa_type
-        if pwa_type == 'smt_NEW':
-            return smt_NEW(pwa_obj)
         if pwa_type == 'window':
             return Pwa_window(pwa_obj)
         if pwa_type == 'menu':
