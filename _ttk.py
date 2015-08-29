@@ -1,13 +1,96 @@
-import ttk
-import tkMessageBox
-import Tkinter
+# GUI object/properties browser on Tk.
+# Copyright (C) 2015 Matiychuk D.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation; either version 2.1
+# of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the
+#    Free Software Foundation, Inc.,
+#    59 Temple Place,
+#    Suite 330,
+#    Boston, MA 02111-1307 USA
 
-class Window(ttk.Frame):
-    pass
+
+import Tkinter
+import tkMessageBox
+import ttk
 
 def hello():
     print "hello!"
     tkMessageBox.showinfo("hello!")
+
+class ViewController(object):
+    def __init__(self, prnt):
+        self.prnt = prnt
+
+        self.init_mainwindow()
+        self.init_objects_browser()
+        self.init_editor()
+        self.init_properties()
+        self.init_menu()
+
+        self.bind_menu()
+
+    def init_mainwindow(self):
+        self.prnt.geometry('800x600')
+        root.minsize(640, 480)
+        self.prnt.wm_title("SWAPY on ttk")
+        self.prnt.iconbitmap("swapy_dog_head.ico")
+
+        #frames
+        self._objects_browser_frame = Tkinter.LabelFrame(self.prnt, text='Objects browser')
+        self._objects_browser_frame.pack(side=Tkinter.LEFT, fill=Tkinter.BOTH, expand=True)
+
+        _right_frame = Tkinter.Frame(self.prnt)
+        _right_frame.pack(side=Tkinter.RIGHT, fill=Tkinter.BOTH, expand=True)
+
+        self._editor_frame = Tkinter.LabelFrame(_right_frame, text='Editor')
+        self._editor_frame.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=True)
+        self._properties_frame = Tkinter.LabelFrame(_right_frame, text='Properties')
+        self._properties_frame.pack(side=Tkinter.BOTTOM, fill=Tkinter.BOTH, expand=True)
+
+    def init_objects_browser(self):
+        self.objects_browser = ttk.Treeview(self._objects_browser_frame, show='tree')
+        self.objects_browser.pack(fill=Tkinter.BOTH, expand=True)
+
+    def init_editor(self):
+        self.editor = Tkinter.Text(self._editor_frame,
+                                   height=7,
+                                   width=7,
+                                   font='Arial 14',
+                                   wrap=Tkinter.WORD,
+                                   )
+        self.editor.pack(side=Tkinter.LEFT, fill=Tkinter.BOTH, expand=True)
+
+        yscrollbar = Tkinter.Scrollbar(self._editor_frame)
+        yscrollbar.pack(side=Tkinter.RIGHT, fill=Tkinter.Y)
+
+        self.editor.config(yscrollcommand=yscrollbar.set)
+        yscrollbar.config(command=self.editor.yview)
+
+    def init_properties(self):
+        self.properties = ttk.Treeview(self._properties_frame)
+        self.properties.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=True)
+
+    def init_menu(self):
+        self.menu = Tkinter.Menu(self.prnt)
+        self.prnt.config(menu=self.menu)
+
+    def bind_menu(self):
+        filemenu = Tkinter.Menu(self.menu, tearoff=0)
+        filemenu.add_command(label="Open", command=hello)
+        filemenu.add_command(label="Save", command=hello)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=root.quit)
+        self.menu.add_cascade(label="File", menu=filemenu)
 
 
 def demo():
@@ -16,9 +99,6 @@ def demo():
     root.geometry('800x600')
     root.wm_title("SWAPY on ttk")
     root.iconbitmap("swapy_dog_head.ico")
-
-    wondow = Window(root)
-    wondow.pack()
 
     tree = ttk.Treeview(root, show='tree')
     id2 = tree.insert("", 1, "dir2", text="Dir 2")
@@ -71,4 +151,6 @@ def demo():
 
 
 if __name__ == "__main__":
-    demo()
+    root = Tkinter.Tk()
+    view_controller = ViewController(root)
+    root.mainloop()
