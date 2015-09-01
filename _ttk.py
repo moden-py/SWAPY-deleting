@@ -60,7 +60,7 @@ class ObjectsBrowser(ttk.Treeview, SWAPYControl):
 
     def __init__(self, *args, **kwargs):
         super(ObjectsBrowser, self).__init__(*args, **kwargs)
-        istance_value = {}
+        self._swapy_istances_values = {}
 
     def _swapy_draw(self):
         #Required method. Draw treeview
@@ -68,9 +68,35 @@ class ObjectsBrowser(ttk.Treeview, SWAPYControl):
 
     def _swapy_init(self):
         #Adds the root object
+        self._swapy_istances_values = {}
         self.delete(*self.get_children(''))
-        root_obj = proxy.PC_system(None)
-        item = self.insert("", "end", text=root_obj.GetProperties()['PC name'], values=(123, ))
+        pwa = proxy.PC_system(None)
+        root_tree_item = self._swapy_add_item("", text=pwa.GetProperties()['PC name'], value=pwa)
+        self._swapy_update_item(root_tree_item)
+        self.item(root_tree_item, open=True)
+        return root_tree_item, pwa
+
+    def _swapy_add_item(self, parent, text, value):
+        print type(text)
+        new_item = self.insert(parent, "end", text=text)
+        self._swapy_istances_values.update({new_item: value})
+        return new_item
+
+    def _swapy_update_item(self, item):
+        pwa = self._swapy_get_value(item)
+        if not pwa._check_existence():
+          root_item, pwa = self._swapy_init()
+          item = root_item
+        texts_values = pwa.Get_subitems()
+        children_items = self.get_children(item)
+        self.delete(*children_items)
+        for child in children_items:
+            self._swapy_istances_values.pop(child)
+        for text, value in texts_values:
+            self._swapy_add_item(item, text, value)
+
+    def _swapy_get_value(self, item):
+        return self._swapy_istances_values[item]
 
 
 class ViewController(object):
@@ -78,7 +104,7 @@ class ViewController(object):
         self.prnt = prnt
 
         self._show_mainwindow()
-        self.objects_browser = ObjectsBrowser(self._objects_browser_frame, show='tree')
+        self.objects_browser = ObjectsBrowser(self._objects_browser_frame, show='tree', selectmode='browse')
 
         self.show_all()
         self.bind_all()
@@ -91,7 +117,7 @@ class ViewController(object):
         self._show_menu()
 
     def bind_all(self):
-        # self._bind_objects_browser()
+        self._bind_objects_browser()
         self._bind_menu()
 
     def _show_mainwindow(self):
@@ -135,44 +161,32 @@ class ViewController(object):
         self.menu = Tkinter.Menu(self.prnt)
         self.prnt.config(menu=self.menu)
 
-    # def _bind_objects_browser(self):
-    #     self.objects_browser.bind("<Button-3>", self.on_right_click_objects_browser)
-    #     self.objects_browser.bind('<<TreeviewOpen>>', self.on_item_expand_objects_browser)
+    def _bind_objects_browser(self):
+        self.objects_browser.bind("<Button-3>", self.on_right_click_objects_browser)
+        self.objects_browser.bind('<<TreeviewSelect>>', self.on_item_expand_objects_browser)
 
     def _bind_menu(self):
         filemenu = Tkinter.Menu(self.menu, tearoff=False)
-        #filemenu.add_command(label="Open", command=self._init_objects_browser)
+        filemenu.add_command(label="Refresh", command=self.objects_browser._swapy_init)
         filemenu.add_command(label="Save", command=hello)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=root.quit)
         self.menu.add_cascade(label="File", menu=filemenu)
-    #
-    # def on_right_click_objects_browser(self, event):
-    #     item = self.objects_browser.identify('item', event.x, event.y)
-    #     value = pickle.loads(self.objects_browser.item(item)['values'][0])
-    #     print type(value), value
-    #
-    # def on_item_expand_objects_browser(self, event):
-    #     def _update(item, obj):
-    #         self.objects_browser.delete(*self.objects_browser.get_children(item))
-    #         subitems = obj.Get_subitems()
-    #         for i_name, i_obj in subitems:
-    #             self.objects_browser.insert(item, "end", text=i_name, values=(i_obj))
-    #
-    #     tree_item = self.objects_browser.selection()
-    #     obj = self.objects_browser.item(tree_item)['values'][0]
-    #
-    #     print type(obj)
-    #
-    #     if not obj._check_existence():
-    #       self._init_objects_browser()
-    #       root_item = self.objects_browser.get_children()[0]
-    #       tree_item = root_item
-    #       obj = self.objects_browser.item(tree_item)['values'][0]
-    #     #self.prop_updater.props_update(obj)
-    #     #self.tree_updater.tree_update(tree_item, obj)
-    #     _update(tree_item, obj)
-    #     obj.Highlight_control()
+
+    def on_right_click_objects_browser(self, event):
+        item = self.objects_browser.identify('item', event.x, event.y)
+        pwa = self.objects_browser._swapy_get_value(item)
+
+    def on_item_expand_objects_browser(self, event):
+
+        item = self.objects_browser.selection()[0]  # Only one item may be selected
+        self.objects_browser._swapy_update_item(item)
+        pwa = self.objects_browser._swapy_get_value(item)
+
+
+        #self.prop_updater.props_update(obj)
+        #self.tree_updater.tree_update(tree_item, obj)
+        pwa.Highlight_control()
 
 
 def demo():
