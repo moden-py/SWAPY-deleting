@@ -21,12 +21,12 @@
 #Boa:App:BoaApp
 
 from Tkinter import Tk
-from _ttk import ViewController
+from _ttk import MainWindow
 
 
 def main():
     root = Tk()
-    view_controller = ViewController(root)
+    view_controller = MainWindow(root)
     root.mainloop()
 
 
