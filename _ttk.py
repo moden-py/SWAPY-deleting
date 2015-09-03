@@ -67,8 +67,8 @@ class SWAPYMenu(Menu):
     def swapy_attach_menu(self, event):
         self.post(event.x_root, event.y_root)
 
-    def swapy_add_item(self, label, menu_id, pwa=None, state=NORMAL):
-        self.add_command(label=label, state=state, command=lambda: self.swapy_callback(menu_id, pwa))
+    def swapy_add_item(self, label, menu_id, state=NORMAL, *args):
+        self.add_command(label=label, state=state, command=lambda: self.swapy_callback(menu_id, *args))
 
     def swapy_clear(self):
         # Removes all the menu items
@@ -196,6 +196,7 @@ class ViewController(object):
         self.main_menu = SWAPYMenu(hello, self.prnt, tearoff=0)
         self.objects_browser_popup_menu = SWAPYMenu(self.make_pwa_action, self.prnt, tearoff=0)
         self.properties_popup_menu = SWAPYMenu(self.properties_clipboard_actions, self.prnt, tearoff=0)
+        self.editor_popup_menu = SWAPYMenu(self.editor_clipboard_actions, self.prnt, tearoff=0)
 
         self.show_all()
         self.bind_all()
@@ -213,6 +214,7 @@ class ViewController(object):
         self.objects_browser.bind("<Button-3>", self.on_right_click_objects_browser)
         self.objects_browser.bind('<<TreeviewSelect>>', self.on_item_select_objects_browser)
         self.properties.bind("<Button-3>", self.on_right_click_properties)
+        self.editor.bind("<Button-3>", self.on_right_click_editor)
 
         self._bind_main_menu()
 
@@ -253,7 +255,7 @@ class ViewController(object):
           if actions:
               for menu_id, action_name in actions:
                   state = NORMAL if pwa._check_actionable() else DISABLED
-                  self.objects_browser_popup_menu.swapy_add_item(action_name, menu_id, pwa, state=state)
+                  self.objects_browser_popup_menu.swapy_add_item(action_name, menu_id, state, pwa)
           else:
               self.objects_browser_popup_menu.swapy_add_item('No actions', 0, state=DISABLED)
         else:
@@ -273,11 +275,18 @@ class ViewController(object):
     def on_right_click_properties(self, event):
         self.properties_popup_menu.swapy_clear()
         item = self.properties.identify('item', event.x, event.y)
-        self.properties_popup_menu.swapy_add_item('Copy all', 201, item)
+        self.properties_popup_menu.swapy_add_item('Copy all', 201, None, item)
         self.properties_popup_menu.add_separator()
-        self.properties_popup_menu.swapy_add_item('Copy property', 202, item)
-        self.properties_popup_menu.swapy_add_item('Copy value', 203, item)
+        self.properties_popup_menu.swapy_add_item('Copy property', 202, None, item)
+        self.properties_popup_menu.swapy_add_item('Copy value', 203, None, item)
         self.properties_popup_menu.swapy_attach_menu(event)
+
+    def on_right_click_editor(self, event):
+        self.editor_popup_menu.swapy_clear()
+        self.editor_popup_menu.swapy_add_item('Cut', 301, None, "<<Cut>>")
+        self.editor_popup_menu.swapy_add_item('Copy', 302, None, "<<Copy>>")
+        self.editor_popup_menu.swapy_add_item('Paste', 303, None, "<<Paste>>")
+        self.editor_popup_menu.swapy_attach_menu(event)
 
 
     # Menu actions
@@ -300,7 +309,8 @@ class ViewController(object):
             pass
         self.prnt.clipboard_append(clipdata)
 
-
+    def editor_clipboard_actions(self, *args):
+        self.editor.event_generate(args[1])
 
 
 def demo():

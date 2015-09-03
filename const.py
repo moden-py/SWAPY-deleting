@@ -19,33 +19,39 @@
 #    Boston, MA 02111-1307 USA
 
 
-PWA_ACTIONS =  {101 : 'Close',
-                102 : 'Click',
-                103 : 'ClickInput',
-                104 : 'CloseClick',
-                105 : 'DoubleClick',
-                106 : 'DoubleClickInput',
-                107 : 'DragMouse',
-                108 : 'DrawOutline',
-                109 : 'Maximize',
-                110 : 'Minimize',
-                111 : 'MoveMouse',
-                112 : 'MoveWindow',
-                113 : 'PressMouse',
-                114 : 'PressMouseInput',
-                115 : 'ReleaseMouse',
-                116 : 'ReleaseMouseInput',
-                117 : 'Restore',
-                118 : 'RightClick',
-                119 : 'RightClickInput',
-                120 : 'SetFocus',
-                121 : 'Select',
-                122 : 'Collapse',
-                123 : 'Expand',
-                }
+PWA_ACTIONS = {101: 'Close',
+               102: 'Click',
+               103: 'ClickInput',
+               104: 'CloseClick',
+               105: 'DoubleClick',
+               106: 'DoubleClickInput',
+               107: 'DragMouse',
+               108: 'DrawOutline',
+               109: 'Maximize',
+               110: 'Minimize',
+               111: 'MoveMouse',
+               112: 'MoveWindow',
+               113: 'PressMouse',
+               114: 'PressMouseInput',
+               115: 'ReleaseMouse',
+               116: 'ReleaseMouseInput',
+               117: 'Restore',
+               118: 'RightClick',
+               119: 'RightClickInput',
+               120: 'SetFocus',
+               121: 'Select',
+               122: 'Collapse',
+               123: 'Expand',
+               }
 
 PROPERTIES_ACTIONS = {201: 'Copy all',
                       202: 'Copy property',
-                      203: 'Copy value'}
+                      203: 'Copy value',
+                      }
+
+EDITOR_ACTIONS = {301: 'Cut',
+                  302: 'Copy',
+                  303: 'Paste',
+                  }
 
 VERSION = '0.4.4'
