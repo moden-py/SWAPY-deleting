@@ -111,7 +111,7 @@ class SWAPYObject(object):
         '''
         Execute action on the control
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         #print('self.pwa_obj.'+action+'()')
         exec('self.pwa_obj.'+action+'()')
         return 0
@@ -125,7 +125,7 @@ class SWAPYObject(object):
             obj_actions = dir(self.pwa_obj.WrapperObject())
         except:
             obj_actions = dir(self.pwa_obj)
-        for id, action in ACTIONS.items():
+        for id, action in PWA_ACTIONS.items():
             if action in obj_actions:
                 allowed_actions.append((id,action))
         allowed_actions.sort(key=lambda name: name[1].lower())
@@ -135,7 +135,7 @@ class SWAPYObject(object):
         '''
         Generate code for pywinauto module
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         code = "\
 ctrl = window['"+self._get_additional_properties()['Access names'][0].encode('unicode-escape', 'replace')+"']\n\
 ctrl."+action+"()\n"
@@ -379,7 +379,7 @@ class VirtualSWAPYObject(SWAPYObject):
         '''
         Generate code for pywinauto module
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         arg = ""
         try:
             arg = "'"+self.index.encode('unicode-escape', 'replace')+"'"
@@ -499,7 +499,7 @@ class Pwa_window(SWAPYObject):
         '''
         winod code
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         code = "\
 w_handle = pywinauto.findwindows.find_windows(title=u'"+ self.pwa_obj.WindowText().encode('unicode-escape', 'replace') +"', class_name='"+ self.pwa_obj.Class() +"')[0]\n\
 window = pwa_app.window_(handle=w_handle)\n\
@@ -611,7 +611,7 @@ class Pwa_menu_item(Pwa_menu):
         '''
         Generate code for pywinauto module
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         code = "\
 window.MenuItem(u'"+self.get_menuitems_path().encode('unicode-escape', 'replace')+"')."+action+"()\n\
 "
@@ -757,7 +757,7 @@ class Pwa_toolbar_button(SWAPYObject):
         '''
         Generate code for pywinauto module
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         arg = str(self.pwa_obj.index)
         code = "\
 ctrl.Button("+arg+")."+action+"()\n"
@@ -828,7 +828,7 @@ class Pwa_tree_item(SWAPYObject):
         '''
         Generate code for pywinauto module
         '''
-        action = ACTIONS[action_id]
+        action = PWA_ACTIONS[action_id]
         code = "\
 ctrl.GetItem("+str(self.path)+")."+action+"()\n"
         return code

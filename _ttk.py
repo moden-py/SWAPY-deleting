@@ -172,7 +172,8 @@ class Properties(Treeview, SWAPYControl):
     def _swapy_add_properties(self, properties):
         # Add a bunch of properties
         self._swapy_init()
-        for name, value in properties.iteritems():
+        properties = [(n, v) for n, v in properties.iteritems()]
+        for name, value in sorted(properties):
             self.insert('', END, text=name, values=(str(value),))
 
 
@@ -190,10 +191,11 @@ class ViewController(object):
                              font='Arial 9',
                              wrap=WORD,
                              )
-        self.properties = Properties(self._properties_frame)
+        self.properties = Properties(self._properties_frame,
+                                     selectmode='browse')
         self.main_menu = SWAPYMenu(hello, self.prnt, tearoff=0)
         self.objects_browser_popup_menu = SWAPYMenu(self.make_pwa_action, self.prnt, tearoff=0)
-        self.properties_popup_menu = SWAPYMenu(hello, self.prnt, tearoff=0)
+        self.properties_popup_menu = SWAPYMenu(self.properties_clipboard_actions, self.prnt, tearoff=0)
 
         self.show_all()
         self.bind_all()
@@ -264,18 +266,39 @@ class ViewController(object):
         item = self.objects_browser.selection()[0]  # Only one item may be selected
         self.objects_browser._swapy_update_item(item)
         pwa = self.objects_browser._swapy_get_value(item)
-        self.properties._swapy_add_properties(pwa.GetProperties())
+        properties = pwa.GetProperties()
+        self.properties._swapy_add_properties(properties)
         pwa.Highlight_control()
 
     def on_right_click_properties(self, event):
+        self.properties_popup_menu.swapy_clear()
         item = self.properties.identify('item', event.x, event.y)
-        pwa = self.properties._swapy_get_value(item)
+        self.properties_popup_menu.swapy_add_item('Copy all', 201, item)
+        self.properties_popup_menu.add_separator()
+        self.properties_popup_menu.swapy_add_item('Copy property', 202, item)
+        self.properties_popup_menu.swapy_add_item('Copy value', 203, item)
+        self.properties_popup_menu.swapy_attach_menu(event)
+
 
     # Menu actions
     def make_pwa_action(self, menu_id, pwa):
         code = pwa.Get_code(menu_id)
         self.editor._swapy_add_line(code)
         pwa.Exec_action(menu_id)
+
+    def properties_clipboard_actions(self, menu_id, item):
+        self.prnt.clipboard_clear()
+        if menu_id == 201:  # Copy all
+            children = [self.properties.item(child) for child in self.properties.get_children()]
+            clipdata = '\n'.join(["%s : %s" % (child['text'], child['values'][0]) for child in children])
+        elif menu_id == 202:  # Copy property
+            clipdata = self.properties.item(item)['text']
+        elif menu_id == 203:  # Copy value
+            clipdata = self.properties.item(item)['values'][0]
+        else:
+            #Unknow id
+            pass
+        self.prnt.clipboard_append(clipdata)
 
 
 
