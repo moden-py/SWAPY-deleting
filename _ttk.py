@@ -20,24 +20,23 @@
 
 
 from abc import ABCMeta, abstractmethod
-import pickle
-import Tkinter
+from Tkinter import BOTH, BOTTOM, DISABLED, END, HORIZONTAL, LEFT, NORMAL, RIGHT, TOP, WORD, Y,\
+    Frame, LabelFrame, Menu, Scrollbar, Text, Tk
 import tkMessageBox
-import ttk
+from ttk import Treeview, Progressbar
 
 import proxy
 
 
-def hello():
+def hello(*args):
     print "hello!"
-    tkMessageBox.showinfo("hello!")
+    tkMessageBox.showinfo("hello! - %s" % str(args))
 
 
 class SWAPYControl(object):
     """
     Base class for SWAPY's window control. Abstract class.
     """
-
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -50,24 +49,49 @@ class SWAPYControl(object):
         #Init the events
         pass
 
+    def _swapy_get_parent(self):
+        parent_name = self.winfo_parent()
+        parent = self._nametowidget(parent_name)
+        return parent
 
-class ObjectsBrowser(ttk.Treeview, SWAPYControl):
+
+class SWAPYMenu(Menu):
     """
-    Objects browser based on ttk.Treeview + custom map for item-value.
-    The reason - as in the ttk.Treeview.insert("", "end", text="text", values=(swapy_object, ))
+    Class for window/popup menu
+    """
+
+    def __init__(self, swapy_callback, *args, **kwargs):
+        Menu.__init__(self, *args, **kwargs)
+        self.swapy_callback = swapy_callback
+
+    def swapy_attach_menu(self, event):
+        self.post(event.x_root, event.y_root)
+
+    def swapy_add_item(self, label, menu_id, pwa=None, state=NORMAL):
+        self.add_command(label=label, state=state, command=lambda: self.swapy_callback(menu_id, pwa))
+
+    def swapy_clear(self):
+        # Removes all the menu items
+        self.delete(0, END)
+
+
+class ObjectsBrowser(Treeview, SWAPYControl):
+    """
+    Objects browser based on Treeview + custom map for item-value.
+    The reason - as in the Treeview.insert("", "end", text="text", values=(swapy_object, ))
     values can be only str or int not a custom instance
     """
 
     def __init__(self, *args, **kwargs):
         super(ObjectsBrowser, self).__init__(*args, **kwargs)
-        self._swapy_istances_values = {}
+        self._swapy_istances_values = {}  # Map for tree_id - pwa_object
 
     def _swapy_draw(self):
-        #Required method. Draw treeview
-        self.pack(fill=Tkinter.BOTH, expand=True)
+        # Required method. Draw treeview
+        self.pack(fill=BOTH, expand=True)
 
     def _swapy_init(self):
-        #Adds the root object
+        # Adds the root object
         self._swapy_istances_values = {}
         self.delete(*self.get_children(''))
         pwa = proxy.PC_system(None)
@@ -77,12 +101,13 @@ class ObjectsBrowser(ttk.Treeview, SWAPYControl):
         return root_tree_item, pwa
 
     def _swapy_add_item(self, parent, text, value):
-        print type(text)
+        # Adds a tree_id, map the value
         new_item = self.insert(parent, "end", text=text)
         self._swapy_istances_values.update({new_item: value})
         return new_item
 
     def _swapy_update_item(self, item):
+        # Clear & update children of the item
         pwa = self._swapy_get_value(item)
         if not pwa._check_existence():
           root_item, pwa = self._swapy_init()
@@ -96,7 +121,59 @@ class ObjectsBrowser(ttk.Treeview, SWAPYControl):
             self._swapy_add_item(item, text, value)
 
     def _swapy_get_value(self, item):
+        # Extracrs a value of the tree item
         return self._swapy_istances_values[item]
+
+
+class Editor(Text, SWAPYControl):
+    """
+    Text editor + scrolls
+    """
+
+    def _swapy_draw(self):
+        # Required method. Draw text editor
+        self.pack(side=LEFT, fill=BOTH, expand=True)
+
+        yscrollbar = Scrollbar(self._swapy_get_parent())
+        yscrollbar.pack(side=RIGHT, fill=Y)
+
+        self.config(yscrollcommand=yscrollbar.set)
+        yscrollbar.config(command=self.yview)
+
+    def _swapy_init(self):
+        # Clear, add header code
+        self.delete('1.0', END)
+        self._swapy_add_line("import pywinauto",
+                             "pwa_app = pywinauto.application.Application()",
+                             )
+
+    def _swapy_add_line(self, *lines):
+        # Adds new line
+        for line in lines:
+            self.insert(END, line + '\n')
+
+
+class Properties(Treeview, SWAPYControl):
+    """
+    Properties viewer
+    """
+
+    def _swapy_draw(self):
+        # Required method. Draw properties viewer
+        self["columns"] = ("value",)
+        self.heading("#0", text="Property")
+        self.heading("value", text="Value")
+        self.pack(side=TOP, fill=BOTH, expand=True)
+
+    def _swapy_init(self):
+        # Clear all properties
+        self.delete(*self.get_children(''))
+
+    def _swapy_add_properties(self, properties):
+        # Add a bunch of properties
+        self._swapy_init()
+        for name, value in properties.iteritems():
+            self.insert('', END, text=name, values=(str(value),))
 
 
 class ViewController(object):
@@ -104,107 +181,121 @@ class ViewController(object):
         self.prnt = prnt
 
         self._show_mainwindow()
-        self.objects_browser = ObjectsBrowser(self._objects_browser_frame, show='tree', selectmode='browse')
+        self.objects_browser = ObjectsBrowser(self._objects_browser_frame,
+                                              show='tree',
+                                              selectmode='browse')
+        self.editor = Editor(self._editor_frame,
+                             height=7,
+                             width=7,
+                             font='Arial 9',
+                             wrap=WORD,
+                             )
+        self.properties = Properties(self._properties_frame)
+        self.main_menu = SWAPYMenu(hello, self.prnt, tearoff=0)
+        self.objects_browser_popup_menu = SWAPYMenu(self.make_pwa_action, self.prnt, tearoff=0)
+        self.properties_popup_menu = SWAPYMenu(hello, self.prnt, tearoff=0)
 
         self.show_all()
         self.bind_all()
         self.objects_browser._swapy_init()
+        self.editor._swapy_init()
+        self.properties._swapy_init()
 
     def show_all(self):
         self.objects_browser._swapy_draw()
-        self._show_editor()
-        self._show_properties()
-        self._show_menu()
+        self.editor._swapy_draw()
+        self.properties._swapy_draw()
+        self.prnt.config(menu=self.main_menu)
 
     def bind_all(self):
-        self._bind_objects_browser()
-        self._bind_menu()
+        self.objects_browser.bind("<Button-3>", self.on_right_click_objects_browser)
+        self.objects_browser.bind('<<TreeviewSelect>>', self.on_item_select_objects_browser)
+        self.properties.bind("<Button-3>", self.on_right_click_properties)
+
+        self._bind_main_menu()
 
     def _show_mainwindow(self):
         self.prnt.geometry('800x600')
-        root.minsize(640, 480)
+        self.prnt.minsize(640, 480)
         self.prnt.wm_title("SWAPY on ttk")
         self.prnt.iconbitmap("swapy_dog_head.ico")
 
         #frames
-        self._objects_browser_frame = Tkinter.LabelFrame(self.prnt, text='Objects browser')
-        self._objects_browser_frame.pack(side=Tkinter.LEFT, fill=Tkinter.BOTH, expand=True)
+        self._objects_browser_frame = LabelFrame(self.prnt, text='Objects browser')
+        self._objects_browser_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
-        _right_frame = Tkinter.Frame(self.prnt)
-        _right_frame.pack(side=Tkinter.RIGHT, fill=Tkinter.BOTH, expand=True)
+        _right_frame = Frame(self.prnt)
+        _right_frame.pack(side=RIGHT, fill=BOTH, expand=True)
 
-        self._editor_frame = Tkinter.LabelFrame(_right_frame, text='Editor')
-        self._editor_frame.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=True)
-        self._properties_frame = Tkinter.LabelFrame(_right_frame, text='Properties')
-        self._properties_frame.pack(side=Tkinter.BOTTOM, fill=Tkinter.BOTH, expand=True)
+        self._editor_frame = LabelFrame(_right_frame, text='Editor')
+        self._editor_frame.pack(side=TOP, fill=BOTH, expand=True)
+        self._properties_frame = LabelFrame(_right_frame, text='Properties')
+        self._properties_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
 
-    def _show_editor(self):
-        self.editor = Tkinter.Text(self._editor_frame,
-                                   height=7,
-                                   width=7,
-                                   font='Arial 14',
-                                   wrap=Tkinter.WORD,
-                                   )
-        self.editor.pack(side=Tkinter.LEFT, fill=Tkinter.BOTH, expand=True)
-
-        yscrollbar = Tkinter.Scrollbar(self._editor_frame)
-        yscrollbar.pack(side=Tkinter.RIGHT, fill=Tkinter.Y)
-
-        self.editor.config(yscrollcommand=yscrollbar.set)
-        yscrollbar.config(command=self.editor.yview)
-
-    def _show_properties(self):
-        self.properties = ttk.Treeview(self._properties_frame)
-        self.properties.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=True)
-
-    def _show_menu(self):
-        self.menu = Tkinter.Menu(self.prnt)
-        self.prnt.config(menu=self.menu)
-
-    def _bind_objects_browser(self):
-        self.objects_browser.bind("<Button-3>", self.on_right_click_objects_browser)
-        self.objects_browser.bind('<<TreeviewSelect>>', self.on_item_expand_objects_browser)
-
-    def _bind_menu(self):
-        filemenu = Tkinter.Menu(self.menu, tearoff=False)
-        filemenu.add_command(label="Refresh", command=self.objects_browser._swapy_init)
-        filemenu.add_command(label="Save", command=hello)
+    def _bind_main_menu(self):
+        filemenu = SWAPYMenu(hello, self.prnt, tearoff=0)
+        filemenu.swapy_add_item("Refresh", 1)
+        filemenu.swapy_add_item("Save", 2)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=root.quit)
-        self.menu.add_cascade(label="File", menu=filemenu)
+        filemenu.swapy_add_item("Exit", 3)
+        self.main_menu.add_cascade(label="File", menu=filemenu)
 
+    # Bindings
     def on_right_click_objects_browser(self, event):
+        self.objects_browser_popup_menu.swapy_clear()
         item = self.objects_browser.identify('item', event.x, event.y)
         pwa = self.objects_browser._swapy_get_value(item)
 
-    def on_item_expand_objects_browser(self, event):
+        if pwa._check_existence():
+          actions = pwa.Get_actions()
+          if actions:
+              for menu_id, action_name in actions:
+                  state = NORMAL if pwa._check_actionable() else DISABLED
+                  self.objects_browser_popup_menu.swapy_add_item(action_name, menu_id, pwa, state=state)
+          else:
+              self.objects_browser_popup_menu.swapy_add_item('No actions', 0, state=DISABLED)
+        else:
+          self.objects_browser._swapy_update_item()
+          #self.prop_updater.props_update(obj)
+          #self.tree_updater.tree_update(tree_item, obj)
+        self.objects_browser_popup_menu.swapy_attach_menu(event)
 
+    def on_item_select_objects_browser(self, event):
         item = self.objects_browser.selection()[0]  # Only one item may be selected
         self.objects_browser._swapy_update_item(item)
         pwa = self.objects_browser._swapy_get_value(item)
-
-
-        #self.prop_updater.props_update(obj)
-        #self.tree_updater.tree_update(tree_item, obj)
+        self.properties._swapy_add_properties(pwa.GetProperties())
         pwa.Highlight_control()
+
+    def on_right_click_properties(self, event):
+        item = self.properties.identify('item', event.x, event.y)
+        pwa = self.properties._swapy_get_value(item)
+
+    # Menu actions
+    def make_pwa_action(self, menu_id, pwa):
+        code = pwa.Get_code(menu_id)
+        self.editor._swapy_add_line(code)
+        pwa.Exec_action(menu_id)
+
+
 
 
 def demo():
     x = 0
-    root = Tkinter.Tk()
+    root = Tk()
     root.geometry('800x600')
     root.wm_title("SWAPY on ttk")
     root.iconbitmap("swapy_dog_head.ico")
 
-    tree = ttk.Treeview(root, show='tree')
+    tree = Treeview(root, show='tree')
     id2 = tree.insert("", 1, "dir2", text="Dir 2")
     tree.insert(id2, "end", "dir 2", text="sub dir 2", values=(x))
     tree.pack(side='left')
 
-    text = Tkinter.Text(root, height=7, width=7, font='Arial 14', wrap=Tkinter.WORD)
+    text = Text(root, height=7, width=7, font='Arial 14', wrap=WORD)
     text.pack(side='top')
 
-    table = ttk.Treeview(root)
+    table = Treeview(root)
     table["columns"]=("one","two")
     table.column("one", width=100)
     table.column("two", width=100)
@@ -216,8 +307,8 @@ def demo():
     table.pack(side='bottom')
 
 
-    menubar = Tkinter.Menu(root)
-    filemenu = Tkinter.Menu(menubar, tearoff=0)
+    menubar = Menu(root)
+    filemenu = Menu(menubar, tearoff=0)
     filemenu.add_command(label="Open", command=hello)
     filemenu.add_command(label="Save", command=hello)
     filemenu.add_separator()
@@ -226,14 +317,14 @@ def demo():
     # display the menu
     root.config(menu=menubar)
 
-    progressbar = ttk.Progressbar(orient=Tkinter.HORIZONTAL, length=1000, mode='determinate', value=20, variable=30, maximum=100)
+    progressbar = Progressbar(orient=HORIZONTAL, length=1000, mode='determinate', value=20, variable=30, maximum=100)
     progressbar.pack(side="bottom")
     progressbar.start()
 
 
 
     # create a popup menu
-    menu = Tkinter.Menu(root, tearoff=0)
+    menu = Menu(root, tearoff=0)
     menu.add_command(label="Undo", command=hello)
     menu.add_command(label="Redo", command=hello)
     def popup(event):
@@ -247,6 +338,6 @@ def demo():
 
 
 if __name__ == "__main__":
-    root = Tkinter.Tk()
+    root = Tk()
     view_controller = ViewController(root)
     root.mainloop()
