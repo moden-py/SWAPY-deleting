@@ -21,11 +21,11 @@
 import pywinauto
 import sys, os
 import time
-import wx
 import thread
 import exceptions
 import platform
 import warnings
+import win32api
 from const import *
 
 '''
@@ -104,7 +104,6 @@ class SWAPYObject(object):
         #encode names
         subitems_encoded = []
         for (name, obj) in subitems:
-            name = name.encode('cp1251', 'replace')
             subitems_encoded.append((name, obj))
         return subitems_encoded
         
@@ -209,12 +208,12 @@ ctrl."+action+"()\n"
           try:
               texts = control.Texts()
           except exceptions.WindowsError:
-            texts = ['Unknown control name2!'] #workaround for WindowsError: [Error 0] ...
+            texts = [u'Unknown control name2!'] #workaround for WindowsError: [Error 0] ...
           except exceptions.RuntimeError:
-            texts = ['Unknown control name3!'] #workaround for RuntimeError: GetButtonInfo failed for button with command id 256
+            texts = [u'Unknown control name3!'] #workaround for RuntimeError: GetButtonInfo failed for button with command id 256
           while texts.count(''):
             texts.remove('')
-          text = ', '.join(texts)
+          text = u', '.join(texts)
           if not text:
             u_names = []
             for uniq_name, obj in uniq_names.items():
@@ -225,7 +224,7 @@ ctrl."+action+"()\n"
               u_names.sort(key=len)
               name = u_names[-1]
             else:
-              name = 'Unknown control name1!'
+              name = u'Unknown control name1!'
           else:
             name = text
           return (name, self._get_swapy_object(control))
@@ -277,9 +276,12 @@ ctrl."+action+"()\n"
             return 'tree_view'
         elif type(obj) == pywinauto.controls.common_controls._treeview_element:
             return 'tree_item'
-        elif 1==0:
+        elif type(obj) == pywinauto.controls.win32_controls.ButtonWrapper:
+            return 'button'
+        elif 1 == 0:
             return 'other'
         else:
+            warnings.warn("Unknown type - %s" % str(type(obj)), FutureWarning)
             return 'unknown'
         
     def _get_swapy_object(self, pwa_obj):
@@ -305,6 +307,8 @@ ctrl."+action+"()\n"
             return Pwa_tree(pwa_obj)
         if pwa_type == 'tree_item':
             return Pwa_tree_item(pwa_obj)
+        if pwa_type == 'button':
+            return Pwa_button(pwa_obj)
         else:
             return SWAPYObject(pwa_obj)
             
@@ -431,15 +435,14 @@ class PC_system(SWAPYObject):
         for w_handle in handles:
             wind = app.window_(handle=w_handle)
             if w_handle == taskbar_handle:
-                texts = ['TaskBar']
+                texts = [u'TaskBar']
             else:
                 texts = wind.Texts()
             while texts.count(''):
                 texts.remove('')
-            title = ', '.join(texts)
+            title = u', '.join(texts)
             if not title:
-                title = 'Window#%s' % w_handle
-            title = title.encode('cp1251', 'replace')
+                title = u'Window#%s' % w_handle
             windows.append((title, self._get_swapy_object(wind)))
         windows.sort(key=lambda name: name[0].lower())
         #-----------------------
@@ -449,9 +452,9 @@ class PC_system(SWAPYObject):
         return windows
 
     def _get_properies(self):
-        info = { 'Platform' : platform.platform(), \
-                'Processor' : platform.processor(), \
-                'PC name' : platform.node() }
+        info = { 'Platform': platform.platform(),
+                 'Processor': platform.processor(),
+                 'PC name': win32api.GetComputerNameEx(1)}
                 
         return info
         
@@ -488,7 +491,7 @@ class Pwa_window(SWAPYObject):
         additional_children = []
         menu = self.pwa_obj.Menu()
         if menu:
-            menu_child = [('!Menu', self._get_swapy_object(menu))]
+            menu_child = [(u'!Menu', self._get_swapy_object(menu))]
             additional_children += menu_child
         return additional_children
         
@@ -546,9 +549,9 @@ class Pwa_menu(SWAPYObject):
             item_text = menu_item.Text()
             if item_text == '':
                 if menu_item.Type() == 2048:
-                    item_text = '-----Separator-----'
+                    item_text = u'-----Separator-----'
                 else:
-                    item_text = 'Index: %d' % menu_item.Index()
+                    item_text = u'Index: %d' % menu_item.Index()
             menu_item_child = [(item_text, self._get_swapy_object(menu_item))]
             additional_children += menu_item_child
         return additional_children
@@ -828,4 +831,7 @@ class Pwa_tree_item(SWAPYObject):
         action = ACTIONS[action_id]
         code = "\
 ctrl.GetItem("+str(self.path)+")."+action+"()\n"
-        return code        
+        return code
+
+class Pwa_button(SWAPYObject):
+    pass
