@@ -24,7 +24,65 @@ from Tkinter import BOTH, BOTTOM, DISABLED, END, HORIZONTAL, LEFT, NORMAL, RIGHT
     Frame, LabelFrame, Menu, Scrollbar, Text, Tk
 import tkFileDialog
 from ttk import Treeview, Progressbar
+from threading import Thread
+import time
+
 import proxy
+
+
+class QueueManager(Thread):
+    """
+    Queue for threaded tasks
+    """
+
+    UPDATE_PERIOD = 1000  # ms
+
+    def __init__(self, queue_names=None, *args, **kwargs):
+        super(QueueManager, self).__init__(*args, **kwargs)
+        if not queue_names:
+            queue_names = ["default"]
+        self.queues = {qn: [] for qn in queue_names}
+        self.do_stop = False
+
+    def _sort_queue(self, queue):
+        self.queues[queue].sort(key=lambda job: job['priority'])
+
+    def add_job(self, queue, callback, args=(), kwargs={}, priority=3):
+        """
+        Adds a job in the queue.
+        Priorities:
+        1 - high
+        2 - medium
+        3 - low
+        """
+        self.queues[queue].append({'callback': callback,
+                                   'priority': priority,
+                                   'args': args,
+                                   'kwargs': kwargs})
+        self._sort_queue(queue)
+        print self.queues
+
+    def run(self):
+        while not self.do_stop:
+            print 'loop - %s' % self.queues
+            for queue in self.queues.values():
+                try:
+                    job = queue.pop(0)
+                except IndexError:
+                    continue
+                else:
+                    print "start job"
+                    print job['callback'], job['args'], job['kwargs']
+                    job['callback'](*job['args'], **job['kwargs'])
+                    job['args'][0].prnt.event_generate("<<custom_event>>", when="tail")
+                    print "job done"
+
+            time.sleep(self.UPDATE_PERIOD / 1000.0)
+
+    def stop(self):
+        self.do_stop = True
+
+
 
 
 class SWAPYControl(object):
@@ -173,6 +231,8 @@ class MainWindow(object):
     """
     def __init__(self, prnt):
         self.prnt = prnt
+        self.queue_manager = QueueManager(["browser", "properties"])
+        self.queue_manager.start()
 
         self._show_mainwindow()
         self.objects_browser = ObjectsBrowser(self._objects_browser_frame,
@@ -195,6 +255,14 @@ class MainWindow(object):
         self.bind_all()
         self.init_all()
 
+    def _swapy_job(queue=None, priority=None):
+        def _foo(foo):
+            def _args(*args, **kwargs):
+                print args[0]
+                args[0].queue_manager.add_job(queue, foo, args, kwargs, priority)
+            return _args
+        return _foo
+
     def init_all(self):
         # Set ready state.
         self.objects_browser.swapy_init()
@@ -214,7 +282,13 @@ class MainWindow(object):
         self.objects_browser.bind('<<TreeviewSelect>>', self.on_item_select_objects_browser)
         self.properties.bind("<Button-3>", self.on_right_click_properties)
         self.editor.bind("<Button-3>", self.on_right_click_editor)
+
+        self.editor.bind("<<custom_event>>", self.custom_event)
+
         self._bind_main_menu()
+
+    def custom_event(self):
+        print 'Custom event'
 
     def _show_mainwindow(self):
         # Draw main window.
@@ -249,6 +323,7 @@ class MainWindow(object):
         self.main_menu.add_cascade(label="File", menu=filemenu)
 
     # Event handlers
+    #@_swapy_job("browser", 1)
     def on_right_click_objects_browser(self, event):
         # Draw Rclick popup with actions on objects browser.
         self.objects_browser_popup_menu.swapy_clear()
@@ -293,6 +368,7 @@ class MainWindow(object):
         self.editor_popup_menu.swapy_add_item('Copy', 302, None, "<<Copy>>")
         self.editor_popup_menu.swapy_add_item('Paste', 303, None, "<<Paste>>")
         self.editor_popup_menu.swapy_attach_menu(event)
+
 
     # Menu actions
     def make_pwa_action(self, menu_id, pwa):
