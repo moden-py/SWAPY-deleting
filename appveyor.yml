@@ -30,14 +30,14 @@ install:
 
   # install the appropriate Miniconda (Py2/Py3, 32/64 bit),
   # as well as pywin32, pillow and coverage
-  #- "powershell ./ci/install.ps1"
+  - "powershell ./install.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
-  - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
+  # - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
