@@ -30,8 +30,8 @@ install:
 
   # install the appropriate Miniconda (Py2/Py3, 32/64 bit),
   # as well as pywin32, pillow and coverage
-  - "powershell ./install.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "powershell ./install.ps1"
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
