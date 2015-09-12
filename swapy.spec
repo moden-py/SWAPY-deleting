@@ -10,7 +10,7 @@ exe = EXE(pyz,
           a.zipfiles,
           exclude_binaries=False,
           name=os.path.join('dist', 'swapy.exe'),
-          debug=False,
+          debug=True,
           strip=False,
           upx=False,
-          console=False , icon='swapy_dog.ico')
+          console=True , icon='swapy_dog.ico')
