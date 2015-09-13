@@ -39,12 +39,11 @@ install:
   # target Python version and architecture
    - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
 
-build:
-  - "%CMD_IN_ENV% powershell ./build.ps1"
+build: false  # Not a C# project, build stuff at the test step instead.
 
-#test_script:
-#  # Build the compiled extension and run the project tests
-#  - "build.bat"
+test_script:
+  # Build the compiled extension and run the project tests
+  - "%CMD_IN_ENV% powershell ./build.ps1"
 
 
 #after_test:
