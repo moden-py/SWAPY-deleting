@@ -26,6 +26,7 @@ import _mainframe
 
 modules ={'_mainframe': [0, '', '_mainframe.py'], 'proxy': [0, '', 'proxy.py']}
 
+
 class BoaApp(wx.App):
     def OnInit(self):
         self.main = _mainframe.create(None)
