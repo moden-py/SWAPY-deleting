@@ -30,7 +30,7 @@ install:
 
   # install wxPython
    - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-   - "%CMD_IN_ENV% powershell ./install.ps1"
+   - "%CMD_IN_ENV% powershell ./ci/install.ps1"
 
   # Install the build dependencies of the project.
    - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
@@ -38,7 +38,7 @@ install:
 build: off  # disable automatic builds
 
 build_script:
-  - "%CMD_IN_ENV% powershell ./build.ps1"
+  - "%CMD_IN_ENV% powershell ./ci/build.ps1"
 
 #test_script:
 #  # Build the compiled extension and run the project tests
