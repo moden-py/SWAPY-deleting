@@ -56,6 +56,15 @@ artifacts:
   - path: swapy32bit.exe
   - path: swapy64bit.exe
 
-#on_success:
-#  - TODO: 
-#
+deploy:
+  release: SWAPY-v$(appveyor_build_version)
+  description: 'New version of the SWAPY'
+  provider: GitHub
+  auth_token:
+    secure: 97024c93d4c4a430d1e0640881f1bfc1f54712ac # your encrypted token from GitHub
+  artifact: /swapy\d\dbit\.exe/            # upload all SWAPY binaries to release assets
+  draft: false
+  prerelease: false
+  on:
+    branch: master                 # release from master branch only
+    appveyor_repo_tag: true        # deploy on tag push only
