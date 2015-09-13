@@ -9,7 +9,7 @@ function BuildExe ($python_version, $architecture, $python_home) {
 	$args = "--clean swapy.spec"
 	
 	Write-Host "Run PyInstaller" $pyinstaller_path $args
-    Start-Process -FilePath $pip_path -ArgumentList $args -Wait -Passthru
+    Start-Process -FilePath $pyinstaller_path -ArgumentList $args -Wait -Passthru
 
     if ($architecture -eq "32") {
         $out_filename = "swapy32bit.exe"
