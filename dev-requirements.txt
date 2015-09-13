@@ -1,4 +1,2 @@
 pywinauto
 PyInstaller
-http://www.lfd.uci.edu/~gohlke/pythonlibs/3i673h27/wxPython-3.0.2.0-cp27-none-win32.whl
-http://www.lfd.uci.edu/~gohlke/pythonlibs/3i673h27/wxPython_common-3.0.2.0-py2-none-any.whl

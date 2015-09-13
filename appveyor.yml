@@ -14,9 +14,9 @@ environment:
       PYTHON_VERSION: "2.7"
       PYTHON_ARCH: "32"
 
-#    - PYTHON: "C:\\Python27-x64"
-#      PYTHON_VERSION: "2.7"
-#      PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7"
+      PYTHON_ARCH: "64"
 
 #os:
 #  - unstable # Unstable worker image with logged in user, desktop and interactive build agent
@@ -31,7 +31,7 @@ install:
   # install the appropriate Miniconda (Py2/Py3, 32/64 bit),
   # as well as pywin32, pillow and coverage
    - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  # - "%CMD_IN_ENV% powershell ./install.ps1"
+   - "%CMD_IN_ENV% powershell ./install.ps1"
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
