@@ -1,4 +1,4 @@
-# Sample script to build with PyInstaller
+# Script to build with PyInstaller
 # Authors: Denis Matiychuk
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
 

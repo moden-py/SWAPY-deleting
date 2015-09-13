@@ -28,43 +28,23 @@ install:
   #- ECHO "Notepad location "
   #- ps: "ls C:\\Windows\\System32\\notepad.exe"
 
-  # install the appropriate Miniconda (Py2/Py3, 32/64 bit),
-  # as well as pywin32, pillow and coverage
+  # install wxPython
    - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
    - "%CMD_IN_ENV% powershell ./install.ps1"
 
-  # Install the build dependencies of the project. If some dependencies contain
-  # compiled extensions and are not provided as pre-built wheel packages,
-  # pip will build them from source using the MSVC compiler matching the
-  # target Python version and architecture
+  # Install the build dependencies of the project.
    - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
 
-build: false  # Not a C# project, build stuff at the test step instead.
+build: off  # disable automatic builds
 
-test_script:
-  # Build the compiled extension and run the project tests
+build_script:
   - "%CMD_IN_ENV% powershell ./build.ps1"
 
-
-#after_test:
-#  # Generate coverage report on codecov.io (token is not required for AppVeyor)
-#  - coverage xml
-#  - codecov
+#test_script:
+#  # Build the compiled extension and run the project tests
+#  - "%CMD_IN_ENV% powershell ./build.ps1"
 
 artifacts:
   # Archive the generated coverage report in the ci.appveyor.com build report.
   - path: swapy32bit.exe
   - path: swapy64bit.exe
-
-deploy:
-  release: SWAPY-v$(appveyor_build_version)
-  description: 'New version of the SWAPY'
-  provider: GitHub
-  auth_token:
-    secure: 841c137d53c7077df15fe11455cc8acb894c8808 # your encrypted token from GitHub
-  artifact: /swapy\d\dbit\.exe/            # upload all SWAPY binaries to release assets
-  draft: false
-  prerelease: false
-  on:
-    branch: master                 # release from master branch only
-    appveyor_repo_tag: true        # deploy on tag push only
